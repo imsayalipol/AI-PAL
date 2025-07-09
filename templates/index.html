@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block header %}
+
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h1 style="text-align: center; color: rgb(10, 10, 10)">
+        <span style="color: #faf7f7 ; font-family: 'Courier New', Courier, monospace">AI-PAL</span>
+    </h1>
+
+    <!-- Chat Box -->
+    <div class="chat-box" id="chatBox">
+        {% if history %}
+        {% for q, a in history %}
+        {% if q %}
+        <div class="message user">{{ q }}</div>
+        {% endif %}
+        {% if a %}
+        <div class="message bot">{{ a }}</div>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+    <!-- Form -->
+    <form method="POST" enctype="multipart/form-data" id="chatForm">
+        <div class="input-container">
+            <input type="text" id="question" name="question" placeholder="Ask anything" autocomplete="off">
+
+            <!-- Attach PDF Button -->
+            <label for="doc-upload" class="attach-button">📎 Attach</label>
+            <input type="file" id="doc-upload" name="doc_file" hidden>
+
+            <!-- Send Button -->
+            <button type="submit" class="submit-button">Send</button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}
