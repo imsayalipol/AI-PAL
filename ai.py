@@ -1,12 +1,13 @@
-import ollama
-import logging
+import requests
+import json, os, app
 from dotenv import load_dotenv
-import os
 
-# Load environment variables (not needed for Ollama, but may be used elsewhere)
 load_dotenv()
 
-SYSTEM_PROMPT = """Your name is WALL-E. Act as a science teacher and explain things to a 10-year-old.
+# base URL
+OLLAMA_API_URL="http://localhost:11434/api/"
+
+SYSTEM_PROMPT = """Your name is AI-PAL. Act as a science teacher and explain things to a 10-year-old.
 Only respond about topics related to science, math, astronomy, astrophysics,
 planetary science, and cosmology. If asked anything else, say it's unrelated."""
 
@@ -19,34 +20,57 @@ def upload_file(file_path):
     except Exception as e:
         print("Error while reading file:", e)
         return None
-
+    
 # Get response based on file content + question
-def get_response(question, file_content):
+def get_response(file_id,question):
+    file_content = app.get_file_content(file_id)
+    print("LIne 28 ai : ", file_content)
+    if not file_content:
+        return "File not found in session."
+    
     prompt = f"Context from file:\n{file_content}\n\nQuestion: {question}"
+    print("prompt :  ", prompt)
+    payload = {
+        "model":"llama3",
+        "messages":[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt}
+        ],
+        "stream" : True           
+    }
+    
     try:
-        response = ollama.chat(
-            model="llama3",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return response['message']['content']
+        print("I raeched 44 ai")
+
+        response = requests.post(OLLAMA_API_URL, json=payload, timeout=60)
+        print("I raeched 45 ai")
+        if response.status_code==200:
+            return response.json()['message']['content']
+        else:
+            print("API Error:", response.status_code, response.text)
+            return 'I can not help with that right now'
     except Exception as e:
-        print("Failed to get response:", e)
-        return "I can't help with that right now."
+        print("Network Error:", e)
+        return "Network Error. Can't reach the model."
 
 # Handle text-only queries
 def message_only(question):
-    try:
-        response = ollama.chat(
-            model="llama3",
-            messages=[
+    payload={
+        "model":"llama3",
+            "messages":[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": question}
-            ]
-        )
-        return response['message']['content']
+            ],
+        "stream":True
+    }
+       
+    try:
+        response = requests.post(OLLAMA_API_URL, json=payload, timeout=60)
+        if response.status_code == 200:
+            return response.json()['message']['content']
+        else:
+            print("API Error:", response.status_code, response.text)
+            return 'I can not help with that right now'
     except Exception as e:
         print("Error handling message:", e)
         return "I can't help with that right now."
